@@ -3,18 +3,25 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "@/lib/api";
 
-interface Asset {
+export interface Asset {
   id: number;
   type_id: number;
   asset_code: string;
   asset_name: string;
   quantity: number;
+  type?: { id: number; name: string }; // relasi optional
 }
 
 export function useAsset() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 🔹 Helper untuk ambil pesan error
+  const getErrorMessage = (err: unknown): string => {
+    if (err instanceof Error) return err.message;
+    return String(err);
+  };
 
   // 🔹 Fetch assets
   const fetchAssets = async () => {
@@ -30,23 +37,27 @@ export function useAsset() {
 
       if (!res.ok) throw new Error("Failed to fetch assets");
 
-      const data = await res.json();
-      setAssets(Array.isArray(data) ? data : data.data || []);
-    } catch (err: any) {
+      const data: unknown = await res.json();
+
+      let assetsData: Asset[] = [];
+
+      if (Array.isArray(data)) {
+        assetsData = data as Asset[];
+      } else if (typeof data === "object" && data !== null && "data" in data) {
+        assetsData = (data as { data: Asset[] }).data;
+      }
+
+      setAssets(assetsData);
+    } catch (err: unknown) {
       console.error("Fetch assets error:", err);
-      setError(err.message);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
   // 🔹 Create asset
-  const createAsset = async (payload: {
-    type_id: number;
-    asset_code: string;
-    asset_name: string;
-    quantity: number;
-  }) => {
+  const createAsset = async (payload: Omit<Asset, "id" | "type">) => {
     try {
       const res = await fetch(`${API_URL}/assets`, {
         method: "POST",
@@ -60,10 +71,10 @@ export function useAsset() {
 
       if (!res.ok) throw new Error("Failed to create asset");
 
-      const newAsset = await res.json();
+      const newAsset: Asset = await res.json();
       setAssets((prev) => [...prev, newAsset]);
       return newAsset;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Create asset error:", err);
       throw err;
     }
@@ -72,7 +83,7 @@ export function useAsset() {
   // 🔹 Update asset
   const updateAsset = async (
     id: number,
-    payload: { type_id?: number; asset_code?: string; asset_name?: string; quantity?: number }
+    payload: Partial<Omit<Asset, "id" | "type">>
   ) => {
     try {
       const res = await fetch(`${API_URL}/assets/${id}`, {
@@ -87,10 +98,10 @@ export function useAsset() {
 
       if (!res.ok) throw new Error("Failed to update asset");
 
-      const updatedAsset = await res.json();
+      const updatedAsset: Asset = await res.json();
       setAssets((prev) => prev.map((a) => (a.id === id ? updatedAsset : a)));
       return updatedAsset;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Update asset error:", err);
       throw err;
     }
@@ -110,7 +121,7 @@ export function useAsset() {
       if (!res.ok) throw new Error("Failed to delete asset");
 
       setAssets((prev) => prev.filter((a) => a.id !== id));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Delete asset error:", err);
       throw err;
     }

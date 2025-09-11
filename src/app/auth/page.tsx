@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { API_URL } from "@/lib/api";
 import { useRouter } from "next/navigation";
-import Swal from "sweetalert2"; // ✅ SweetAlert2
+import Swal from "sweetalert2";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
@@ -17,6 +18,16 @@ export default function AuthPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const router = useRouter();
+
+    // 🔹 Pakai useAuth
+    const { user, loading: authLoading } = useAuth();
+
+    // 🔹 Kalau user sudah login → redirect
+    useEffect(() => {
+        if (!authLoading && user) {
+            router.push("/dashboard");
+        }
+    }, [authLoading, user, router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -68,8 +79,8 @@ export default function AuthPage() {
                     text: "Silakan login dengan akun baru kamu.",
                 });
 
-                setIsLogin(true); // balik ke form login
-                setFormData({ name: "", email: "", password: "" }); // reset form
+                setIsLogin(true);
+                setFormData({ name: "", email: "", password: "" });
             }
         } catch (err: any) {
             setError(err.message);
@@ -77,6 +88,11 @@ export default function AuthPage() {
             setLoading(false);
         }
     };
+
+    // Loading state global (auth)
+    if (authLoading) {
+        return <p className="flex items-center justify-center h-screen">Checking session...</p>;
+    }
 
     return (
         <div className="flex h-screen w-full bg-gray-100">

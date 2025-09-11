@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Sidebar from "@/components/layout/Sidebar";
 import TypeTable from "./TypeTable";
 import TypeForm from "./TypeForm";
-import { API_URL } from "@/lib/api";
 import Swal from "sweetalert2";
+import { useTypes } from "@/hooks/useType";
 
 interface Type {
   id: number;
@@ -15,61 +15,28 @@ interface Type {
 }
 
 export default function TypePage() {
-  const [types, setTypes] = useState<Type[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    types,
+    loading,
+    createType,
+    updateType,
+    deleteType,
+  } = useTypes();
+
   const [open, setOpen] = useState(false);
   const [editingType, setEditingType] = useState<Type | null>(null);
-
-  const fetchTypes = async () => {
-    try {
-      const res = await fetch(`${API_URL}/types`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          Accept: "application/json",
-        },
-      });
-      if (!res.ok) throw new Error("Gagal mengambil data tipe");
-      const data = await res.json();
-      setTypes(Array.isArray(data) ? data : data.data || []);
-    } catch (err) {
-      console.error("Fetch types error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTypes();
-  }, []);
 
   const handleSave = async (data: { name: string }) => {
     try {
       if (editingType) {
-        const res = await fetch(`${API_URL}/types/${editingType.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error("Gagal update tipe");
-        Swal.fire("Berhasil", "Tipe berhasil diperbarui", "success");
+        await updateType(editingType.id, data);
+        Swal.fire("Berhasil", "Tipe berhasil diperbarui ✅", "success");
       } else {
-        const res = await fetch(`${API_URL}/types`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error("Gagal tambah tipe");
-        Swal.fire("Berhasil", "Tipe berhasil ditambahkan", "success");
+        await createType(data);
+        Swal.fire("Berhasil", "Tipe berhasil ditambahkan ✅", "success");
       }
-      await fetchTypes();
     } catch (err) {
-      Swal.fire("Error", "Terjadi kesalahan saat menyimpan data tipe", "error");
+      Swal.fire("Error", "Terjadi kesalahan saat menyimpan tipe", "error");
     } finally {
       setEditingType(null);
       setOpen(false);
@@ -77,19 +44,22 @@ export default function TypePage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Apakah kamu yakin ingin menghapus tipe ini?")) return;
+    const result = await Swal.fire({
+      title: "Yakin hapus?",
+      text: "Data tipe akan dihapus permanen",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, hapus",
+      cancelButtonText: "Batal",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
-      const res = await fetch(`${API_URL}/types/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      if (!res.ok) throw new Error("Gagal hapus tipe");
-      Swal.fire("Berhasil", "Tipe berhasil dihapus", "success");
-      await fetchTypes();
+      await deleteType(id);
+      Swal.fire("Berhasil", "Tipe berhasil dihapus ✅", "success");
     } catch (err) {
-      Swal.fire("Error", "Terjadi kesalahan saat menghapus tipe", "error");
+      Swal.fire("Error", "Gagal menghapus tipe", "error");
     }
   };
 

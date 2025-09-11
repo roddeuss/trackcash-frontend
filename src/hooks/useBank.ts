@@ -3,10 +3,18 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "@/lib/api";
 
-interface Bank {
+export interface Bank {
   id: number;
-  name: string;
   account_number: string;
+  bank_name: string;
+  account_name: string;
+  balance: number;
+}
+
+// 🔹 Helper untuk ambil pesan error dengan aman
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
 }
 
 export function useBank() {
@@ -29,20 +37,24 @@ export function useBank() {
       if (!res.ok) throw new Error("Failed to fetch banks");
 
       const data = await res.json();
-      setBanks(Array.isArray(data) ? data : data.data || []);
-    } catch (err: any) {
+
+      if (Array.isArray(data)) {
+        setBanks(data as Bank[]);
+      } else if (Array.isArray(data.data)) {
+        setBanks(data.data as Bank[]);
+      } else {
+        setBanks([]);
+      }
+    } catch (err: unknown) {
       console.error("Fetch banks error:", err);
-      setError(err.message);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
   // 🔹 Create bank
-  const createBank = async (payload: {
-    name: string;
-    account_number: string;
-  }) => {
+  const createBank = async (payload: Omit<Bank, "id">) => {
     try {
       const res = await fetch(`${API_URL}/banks`, {
         method: "POST",
@@ -56,20 +68,17 @@ export function useBank() {
 
       if (!res.ok) throw new Error("Failed to create bank");
 
-      const newBank = await res.json();
+      const newBank: Bank = await res.json();
       setBanks((prev) => [...prev, newBank]);
       return newBank;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Create bank error:", err);
-      throw err;
+      throw new Error(getErrorMessage(err));
     }
   };
 
   // 🔹 Update bank
-  const updateBank = async (
-    id: number,
-    payload: { name: string; account_number: string }
-  ) => {
+  const updateBank = async (id: number, payload: Omit<Bank, "id">) => {
     try {
       const res = await fetch(`${API_URL}/banks/${id}`, {
         method: "PUT",
@@ -83,12 +92,12 @@ export function useBank() {
 
       if (!res.ok) throw new Error("Failed to update bank");
 
-      const updatedBank = await res.json();
+      const updatedBank: Bank = await res.json();
       setBanks((prev) => prev.map((b) => (b.id === id ? updatedBank : b)));
       return updatedBank;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Update bank error:", err);
-      throw err;
+      throw new Error(getErrorMessage(err));
     }
   };
 
@@ -106,9 +115,9 @@ export function useBank() {
       if (!res.ok) throw new Error("Failed to delete bank");
 
       setBanks((prev) => prev.filter((b) => b.id !== id));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Delete bank error:", err);
-      throw err;
+      throw new Error(getErrorMessage(err));
     }
   };
 

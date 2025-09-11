@@ -8,6 +8,12 @@ interface Type {
   name: string;
 }
 
+// 🔹 Helper untuk ambil pesan error
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 export function useTypes() {
   const [types, setTypes] = useState<Type[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,10 +34,18 @@ export function useTypes() {
       if (!res.ok) throw new Error("Failed to fetch types");
 
       const data = await res.json();
-      setTypes(Array.isArray(data) ? data : data.data || []);
-    } catch (err: any) {
+
+      // validasi apakah response array atau object.data
+      if (Array.isArray(data)) {
+        setTypes(data as Type[]);
+      } else if (Array.isArray(data.data)) {
+        setTypes(data.data as Type[]);
+      } else {
+        setTypes([]);
+      }
+    } catch (err: unknown) {
       console.error("Fetch types error:", err);
-      setError(err.message);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -52,12 +66,12 @@ export function useTypes() {
 
       if (!res.ok) throw new Error("Failed to create type");
 
-      const newType = await res.json();
+      const newType: Type = await res.json();
       setTypes((prev) => [...prev, newType]);
       return newType;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Create type error:", err);
-      throw err;
+      throw new Error(getErrorMessage(err));
     }
   };
 
@@ -76,12 +90,12 @@ export function useTypes() {
 
       if (!res.ok) throw new Error("Failed to update type");
 
-      const updatedType = await res.json();
+      const updatedType: Type = await res.json();
       setTypes((prev) => prev.map((t) => (t.id === id ? updatedType : t)));
       return updatedType;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Update type error:", err);
-      throw err;
+      throw new Error(getErrorMessage(err));
     }
   };
 
@@ -99,9 +113,9 @@ export function useTypes() {
       if (!res.ok) throw new Error("Failed to delete type");
 
       setTypes((prev) => prev.filter((t) => t.id !== id));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Delete type error:", err);
-      throw err;
+      throw new Error(getErrorMessage(err));
     }
   };
 

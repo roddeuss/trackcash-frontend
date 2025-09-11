@@ -1,22 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Sidebar from "@/components/layout/Sidebar";
 import AssetTable from "./AssetTable";
 import AssetForm from "./AssetForm";
-import { API_URL } from "@/lib/api";
 import Swal from "sweetalert2";
-
-interface Asset {
-  id: number;
-  type_id: number;
-  asset_code: string;
-  asset_name: string;
-  quantity: number;
-  type?: { id: number; name: string }; // relasi
-}
+import { useAsset } from "@/hooks/useAsset";
+import { API_URL } from "@/lib/api";
 
 interface Type {
   id: number;
@@ -24,30 +16,13 @@ interface Type {
 }
 
 export default function AssetPage() {
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const { assets, loading, fetchAssets, createAsset, updateAsset, deleteAsset } =
+    useAsset();
   const [types, setTypes] = useState<Type[]>([]);
-  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [editingAsset, setEditingAsset] = useState<number | null>(null);
 
-  const fetchAssets = async () => {
-    try {
-      const res = await fetch(`${API_URL}/assets`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          Accept: "application/json",
-        },
-      });
-      if (!res.ok) throw new Error("Gagal mengambil data aset");
-      const data = await res.json();
-      setAssets(Array.isArray(data) ? data : data.data || []);
-    } catch (err) {
-      console.error("Fetch assets error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // 🔹 Ambil types untuk relasi asset
   const fetchTypes = async () => {
     try {
       const res = await fetch(`${API_URL}/types`, {
@@ -69,6 +44,7 @@ export default function AssetPage() {
     fetchTypes();
   }, []);
 
+  // 🔹 Tambah / Update asset
   const handleSave = async (data: {
     type_id: number;
     asset_code: string;
@@ -77,30 +53,14 @@ export default function AssetPage() {
   }) => {
     try {
       if (editingAsset) {
-        const res = await fetch(`${API_URL}/assets/${editingAsset.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error("Gagal update aset");
-        Swal.fire("Berhasil", "Aset berhasil diperbarui", "success");
+        await updateAsset(editingAsset, data);
+        Swal.fire("Berhasil", "Aset berhasil diperbarui ✅", "success");
       } else {
-        const res = await fetch(`${API_URL}/assets`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error("Gagal tambah aset");
-        Swal.fire("Berhasil", "Aset berhasil ditambahkan", "success");
+        await createAsset(data);
+        Swal.fire("Berhasil", "Aset berhasil ditambahkan ✅", "success");
       }
-      await fetchAssets();
     } catch (err) {
+      console.error("Save asset error:", err);
       Swal.fire("Error", "Terjadi kesalahan saat menyimpan data aset", "error");
     } finally {
       setEditingAsset(null);
@@ -108,19 +68,24 @@ export default function AssetPage() {
     }
   };
 
+  // 🔹 Hapus asset
   const handleDelete = async (id: number) => {
-    if (!confirm("Apakah kamu yakin ingin menghapus aset ini?")) return;
+    const result = await Swal.fire({
+      title: "Yakin hapus?",
+      text: "Data aset akan dihapus permanen",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, hapus",
+      cancelButtonText: "Batal",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
-      const res = await fetch(`${API_URL}/assets/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      if (!res.ok) throw new Error("Gagal hapus aset");
-      Swal.fire("Berhasil", "Aset berhasil dihapus", "success");
-      await fetchAssets();
+      await deleteAsset(id);
+      Swal.fire("Berhasil", "Aset berhasil dihapus ✅", "success");
     } catch (err) {
+      console.error("Delete asset error:", err);
       Swal.fire("Error", "Terjadi kesalahan saat menghapus aset", "error");
     }
   };
@@ -146,17 +111,17 @@ export default function AssetPage() {
         <AssetTable
           assets={assets}
           onEdit={(asset) => {
-            setEditingAsset(asset);
+            setEditingAsset(asset.id);
             setOpen(true);
           }}
           onDelete={handleDelete}
         />
 
         <AssetForm
-          open={open || !!editingAsset}
+          open={open || editingAsset !== null}
           onOpenChange={setOpen}
           onSave={handleSave}
-          editingAsset={editingAsset}
+          editingAsset={assets.find((a) => a.id === editingAsset) || null}
           types={types}
         />
       </main>

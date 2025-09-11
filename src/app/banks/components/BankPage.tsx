@@ -1,90 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import BankTable from "./BankTable";
 import BankForm from "./BankForm";
 import Sidebar from "@/components/layout/Sidebar";
-import { API_URL } from "@/lib/api";
 import Swal from "sweetalert2";
-
-
-interface Bank {
-    id: number;
-    account_number: string;
-    bank_name: string;
-    account_name: string;
-    balance: number;
-}
+import { useBank, Bank } from "@/hooks/useBank";
 
 export default function BankPage() {
-    const [banks, setBanks] = useState<Bank[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { banks, loading, createBank, updateBank, deleteBank } = useBank();
     const [open, setOpen] = useState(false);
     const [editingBank, setEditingBank] = useState<Bank | null>(null);
 
-    // 🔹 Fetch data bank dari API
-    const fetchBanks = async () => {
-        try {
-            const res = await fetch(`${API_URL}/banks`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    Accept: "application/json",
-                },
-            });
-
-            if (!res.ok) throw new Error("Gagal mengambil data bank");
-
-            const data = await res.json();
-            setBanks(Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : []));
-        } catch (err) {
-            console.error("Error fetch banks:", err);
-            Swal.fire("Error", "Gagal memuat data bank", "error");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchBanks();
-    }, []);
-
-    // 🔹 Tambah atau update bank
-    const handleSave = async (data: { bank_name: string; account_number: string; account_name: string; balance: number }) => {
+    // 🔹 Tambah / update bank
+    const handleSave = async (data: Omit<Bank, "id">) => {
         try {
             if (editingBank) {
-                // Update bank
-                const res = await fetch(`${API_URL}/banks/${editingBank.id}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                        Accept: "application/json",
-                    },
-                    body: JSON.stringify(data),
-                });
-
-                if (!res.ok) throw new Error("Gagal update bank");
-
+                await updateBank(editingBank.id, data);
                 Swal.fire("Berhasil", "Bank berhasil diperbarui ✅", "success");
-                await fetchBanks();
             } else {
-                // Add new bank
-                const res = await fetch(`${API_URL}/banks`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                        Accept: "application/json",
-                    },
-                    body: JSON.stringify(data),
-                });
-
-                if (!res.ok) throw new Error("Gagal tambah bank");
-
+                await createBank(data);
                 Swal.fire("Berhasil", "Bank berhasil ditambahkan ✅", "success");
-                await fetchBanks();
             }
         } catch (err) {
             console.error("Save bank error:", err);
@@ -109,18 +47,8 @@ export default function BankPage() {
         if (!result.isConfirmed) return;
 
         try {
-            const res = await fetch(`${API_URL}/banks/${id}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    Accept: "application/json",
-                },
-            });
-
-            if (!res.ok) throw new Error("Gagal menghapus bank");
-
+            await deleteBank(id);
             Swal.fire("Berhasil", "Bank berhasil dihapus ✅", "success");
-            await fetchBanks();
         } catch (err) {
             console.error("Delete bank error:", err);
             Swal.fire("Error", "Gagal menghapus bank", "error");
