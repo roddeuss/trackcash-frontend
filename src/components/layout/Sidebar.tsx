@@ -25,6 +25,7 @@ const menuGroups = [
             { name: "Asset", href: "/assets", icon: Database },
             { name: "Bank", href: "/banks", icon: Landmark },
             { name: "Category", href: "/categorys", icon: Tags },
+            { name: "Type", href: "/types", icon: Tags },
         ],
     },
     {
