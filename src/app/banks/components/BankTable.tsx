@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
-import { formatCurrency } from "@/utils/format"
+import { formatCurrency } from "@/utils/format";
 import Pagination from "@/components/common/Pagination";
 
 interface Bank {
@@ -12,6 +12,7 @@ interface Bank {
     account_number: string;
     account_name: string;
     balance: number;
+    final_saldo?: number;
 }
 
 export default function BankTable({
@@ -30,27 +31,43 @@ export default function BankTable({
     const startIndex = (currentPage - 1) * rowsPerPage;
     const currentBanks = banks.slice(startIndex, startIndex + rowsPerPage);
 
+    // 🔹 Hitung total saldo semua bank
+    const totalBalance = useMemo(
+        () => banks.reduce((sum, bank) => sum + (bank.final_saldo ?? 0), 0),
+        [banks]
+    );
+
     return (
-        <div>
+        <div className="space-y-4">
             <table className="w-full border border-gray-200 rounded-lg overflow-hidden">
-                <thead className="bg-gray-100">
-                    <tr>
+                <thead className="bg-gray-50">
+                    <tr className="text-sm font-medium text-gray-600">
                         <th className="text-left p-3">#</th>
                         <th className="text-left p-3">Nama Bank</th>
                         <th className="text-left p-3">Nomor Rekening</th>
                         <th className="text-left p-3">Nama Pemilik</th>
+                        <th className="text-left p-3">Saldo Awal</th>
                         <th className="text-left p-3">Balance</th>
                         <th className="text-left p-3">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="text-sm">
                     {currentBanks.map((bank, index) => (
-                        <tr key={bank.id} className="border-t hover:bg-gray-50">
+                        <tr
+                            key={bank.id}
+                            className="border-t hover:bg-gray-50 transition-colors"
+                        >
                             <td className="p-3">{startIndex + index + 1}</td>
-                            <td className="p-3">{bank.bank_name}</td>
+                            <td className="p-3 font-medium">{bank.bank_name}</td>
                             <td className="p-3">{bank.account_number}</td>
                             <td className="p-3">{bank.account_name}</td>
-                            <td className="px-4 py-2">{formatCurrency(bank.balance)}</td>
+                            <td className="p-3 font-semibold text-indigo-600">
+                                {formatCurrency(bank.balance)}
+                            </td>
+                            <td className="p-3 font-semibold text-indigo-600">
+                                {formatCurrency(bank.final_saldo ?? bank.balance)}
+                            </td>
+
                             <td className="p-3 flex gap-2">
                                 <Button
                                     variant="outline"
@@ -78,6 +95,16 @@ export default function BankTable({
                     )}
                 </tbody>
             </table>
+
+            {/* 🔹 Total saldo */}
+            {banks.length > 0 && (
+                <div className="flex justify-end">
+                    <div className="px-4 py-2 bg-gray-50 border rounded-lg text-sm font-semibold">
+                        Total Saldo:{" "}
+                        <span className="text-indigo-600">{formatCurrency(totalBalance)}</span>
+                    </div>
+                </div>
+            )}
 
             {/* Reusable Pagination */}
             {banks.length > rowsPerPage && (
