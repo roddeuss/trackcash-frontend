@@ -8,9 +8,10 @@ import BankForm from "./BankForm";
 import Sidebar from "@/components/layout/Sidebar";
 import Swal from "sweetalert2";
 import { useBank, Bank } from "@/hooks/useBank";
+import { motion } from "framer-motion";
 
 export default function BankPage() {
-    const { banks, loading, createBank, updateBank, deleteBank } = useBank();
+    const { banks, loading, createBank, updateBank, deleteBank, fetchBanks } = useBank();
     const [open, setOpen] = useState(false);
     const [editingBank, setEditingBank] = useState<Bank | null>(null);
 
@@ -24,6 +25,9 @@ export default function BankPage() {
                 await createBank(data);
                 Swal.fire("Berhasil", "Bank berhasil ditambahkan ✅", "success");
             }
+
+            // ✅ Refresh data biar langsung muncul
+            await fetchBanks();
         } catch (err) {
             console.error("Save bank error:", err);
             Swal.fire("Error", "Terjadi kesalahan saat menyimpan bank", "error");
@@ -49,13 +53,24 @@ export default function BankPage() {
         try {
             await deleteBank(id);
             Swal.fire("Berhasil", "Bank berhasil dihapus ✅", "success");
+            await fetchBanks(); // ✅ Refresh setelah hapus
         } catch (err) {
             console.error("Delete bank error:", err);
             Swal.fire("Error", "Gagal menghapus bank", "error");
         }
     };
 
-    if (loading) return <p className="p-6">Loading...</p>;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                    className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full"
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="flex">

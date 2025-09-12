@@ -9,6 +9,7 @@ import AssetForm from "./AssetForm";
 import Swal from "sweetalert2";
 import { useAsset } from "@/hooks/useAsset";
 import { API_URL } from "@/lib/api";
+import { motion } from "framer-motion";
 
 interface Type {
   id: number;
@@ -59,6 +60,9 @@ export default function AssetPage() {
         await createAsset(data);
         Swal.fire("Berhasil", "Aset berhasil ditambahkan ✅", "success");
       }
+
+      // ✅ Refresh data biar langsung muncul
+      await fetchAssets();
     } catch (err) {
       console.error("Save asset error:", err);
       Swal.fire("Error", "Terjadi kesalahan saat menyimpan data aset", "error");
@@ -84,13 +88,26 @@ export default function AssetPage() {
     try {
       await deleteAsset(id);
       Swal.fire("Berhasil", "Aset berhasil dihapus ✅", "success");
+
+      // ✅ Refresh data setelah hapus
+      await fetchAssets();
     } catch (err) {
       console.error("Delete asset error:", err);
       Swal.fire("Error", "Terjadi kesalahan saat menghapus aset", "error");
     }
   };
 
-  if (loading) return <p className="p-6">Loading...</p>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex">

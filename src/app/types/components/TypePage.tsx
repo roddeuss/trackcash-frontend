@@ -8,6 +8,7 @@ import TypeTable from "./TypeTable";
 import TypeForm from "./TypeForm";
 import Swal from "sweetalert2";
 import { useTypes } from "@/hooks/useType";
+import { motion } from "framer-motion";
 
 interface Type {
   id: number;
@@ -18,6 +19,7 @@ export default function TypePage() {
   const {
     types,
     loading,
+    fetchTypes,
     createType,
     updateType,
     deleteType,
@@ -26,6 +28,7 @@ export default function TypePage() {
   const [open, setOpen] = useState(false);
   const [editingType, setEditingType] = useState<Type | null>(null);
 
+  // 🔹 Save (create / update)
   const handleSave = async (data: { name: string }) => {
     try {
       if (editingType) {
@@ -35,6 +38,9 @@ export default function TypePage() {
         await createType(data);
         Swal.fire("Berhasil", "Tipe berhasil ditambahkan ✅", "success");
       }
+
+      // ✅ Refresh data setelah create/update
+      await fetchTypes();
     } catch (err) {
       Swal.fire("Error", "Terjadi kesalahan saat menyimpan tipe", "error");
     } finally {
@@ -43,6 +49,7 @@ export default function TypePage() {
     }
   };
 
+  // 🔹 Delete
   const handleDelete = async (id: number) => {
     const result = await Swal.fire({
       title: "Yakin hapus?",
@@ -58,12 +65,26 @@ export default function TypePage() {
     try {
       await deleteType(id);
       Swal.fire("Berhasil", "Tipe berhasil dihapus ✅", "success");
+
+      // ✅ Refresh data setelah delete
+      await fetchTypes();
     } catch (err) {
       Swal.fire("Error", "Gagal menghapus tipe", "error");
     }
   };
 
-  if (loading) return <p className="p-6">Loading...</p>;
+  // 🔹 Loading spinner
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex">
