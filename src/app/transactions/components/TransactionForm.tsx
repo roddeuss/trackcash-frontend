@@ -14,6 +14,7 @@ import { Transaction } from "@/hooks/useTransaction";
 import { useBank } from "@/hooks/useBank";
 import { useAsset } from "@/hooks/useAsset";
 import { useCategories } from "@/hooks/useCategories";
+import { DateTimePicker } from "@/components/common/DateTimePicker";
 
 export default function TransactionForm({
   open,
@@ -167,13 +168,11 @@ export default function TransactionForm({
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
-          <Input
-            type="date"
+          <DateTimePicker
             value={form.transaction_date}
-            onChange={(e) =>
-              setForm({ ...form, transaction_date: e.target.value })
-            }
+            onChange={(val) => setForm({ ...form, transaction_date: val })}
           />
+
 
           <Button onClick={handleSubmit} className="w-full">
             {editingTransaction ? "Update" : "Simpan"}

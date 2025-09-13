@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { formatDateTime, formatCurrency } from "@/utils/format";
 
 export default function TransactionPage() {
   const {
@@ -94,16 +95,16 @@ export default function TransactionPage() {
     );
   }, [transactions, search, filterCategory, sortByDate]);
 
-  // Export functions
+  // Export CSV
   const exportCSV = () => {
     const csv = [
       ["Tanggal", "Kategori", "Bank", "Deskripsi", "Jumlah"],
       ...filteredTransactions.map((trx) => [
-        trx.transaction_date,
+        formatDateTime(trx.transaction_date),
         trx.category?.name || "-",
         trx.bank?.bank_name || "-",
         trx.description || "-",
-        trx.amount ?? 0,
+        formatCurrency(trx.amount),
       ]),
     ]
       .map((row) => row.join(","))
@@ -117,14 +118,15 @@ export default function TransactionPage() {
     link.click();
   };
 
+  // Export Excel
   const exportExcel = () => {
     const ws = XLSX.utils.json_to_sheet(
       filteredTransactions.map((trx) => ({
-        Tanggal: trx.transaction_date,
+        Tanggal: formatDateTime(trx.transaction_date),
         Kategori: trx.category?.name || "-",
         Bank: trx.bank?.bank_name || "-",
         Deskripsi: trx.description || "-",
-        Jumlah: trx.amount ?? 0,
+        Jumlah: formatCurrency(trx.amount),
       }))
     );
     const wb = XLSX.utils.book_new();
@@ -132,16 +134,17 @@ export default function TransactionPage() {
     XLSX.writeFile(wb, "transactions.xlsx");
   };
 
+  // Export PDF
   const exportPDF = () => {
     const doc = new jsPDF();
     (doc as any).autoTable({
       head: [["Tanggal", "Kategori", "Bank", "Deskripsi", "Jumlah"]],
       body: filteredTransactions.map((trx) => [
-        trx.transaction_date,
+        formatDateTime(trx.transaction_date),
         trx.category?.name || "-",
         trx.bank?.bank_name || "-",
         trx.description || "-",
-        trx.amount ?? 0,
+        formatCurrency(trx.amount),
       ]),
     });
     doc.save("transactions.pdf");
