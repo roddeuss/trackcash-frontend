@@ -28,7 +28,16 @@ export default function TypePage() {
   const [open, setOpen] = useState(false);
   const [editingType, setEditingType] = useState<Type | null>(null);
 
-  // 🔹 Save (create / update)
+  // Tutup modal = reset editing + setOpen(false)
+  const handleDialogOpenChange = (v: boolean) => {
+    if (!v) {
+      setEditingType(null);
+      setOpen(false);
+    } else {
+      setOpen(true);
+    }
+  };
+
   const handleSave = async (data: { name: string }) => {
     try {
       if (editingType) {
@@ -38,8 +47,6 @@ export default function TypePage() {
         await createType(data);
         Swal.fire("Berhasil", "Tipe berhasil ditambahkan ✅", "success");
       }
-
-      // ✅ Refresh data setelah create/update
       await fetchTypes();
     } catch (err) {
       Swal.fire("Error", "Terjadi kesalahan saat menyimpan tipe", "error");
@@ -49,31 +56,6 @@ export default function TypePage() {
     }
   };
 
-  // 🔹 Delete
-  const handleDelete = async (id: number) => {
-    const result = await Swal.fire({
-      title: "Yakin hapus?",
-      text: "Data tipe akan dihapus permanen",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Ya, hapus",
-      cancelButtonText: "Batal",
-    });
-
-    if (!result.isConfirmed) return;
-
-    try {
-      await deleteType(id);
-      Swal.fire("Berhasil", "Tipe berhasil dihapus ✅", "success");
-
-      // ✅ Refresh data setelah delete
-      await fetchTypes();
-    } catch (err) {
-      Swal.fire("Error", "Gagal menghapus tipe", "error");
-    }
-  };
-
-  // 🔹 Loading spinner
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -108,12 +90,30 @@ export default function TypePage() {
             setEditingType(type);
             setOpen(true);
           }}
-          onDelete={handleDelete}
+          onDelete={async (id) => {
+            const result = await Swal.fire({
+              title: "Yakin hapus?",
+              text: "Data tipe akan dihapus permanen",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonText: "Ya, hapus",
+              cancelButtonText: "Batal",
+            });
+            if (!result.isConfirmed) return;
+
+            try {
+              await deleteType(id);
+              Swal.fire("Berhasil", "Tipe berhasil dihapus ✅", "success");
+              await fetchTypes();
+            } catch {
+              Swal.fire("Error", "Gagal menghapus tipe", "error");
+            }
+          }}
         />
 
         <TypeForm
           open={open || !!editingType}
-          onOpenChange={setOpen}
+          onOpenChange={handleDialogOpenChange}  // <- penting
           onSave={handleSave}
           editingType={editingType}
         />

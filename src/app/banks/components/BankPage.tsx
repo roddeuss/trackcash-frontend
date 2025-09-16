@@ -15,7 +15,16 @@ export default function BankPage() {
     const [open, setOpen] = useState(false);
     const [editingBank, setEditingBank] = useState<Bank | null>(null);
 
-    // 🔹 Tambah / update bank
+    // Close/open handler: reset editing juga saat close
+    const handleDialogOpenChange = (v: boolean) => {
+        if (!v) {
+            setEditingBank(null);
+            setOpen(false);
+        } else {
+            setOpen(true);
+        }
+    };
+
     const handleSave = async (data: Omit<Bank, "id">) => {
         try {
             if (editingBank) {
@@ -25,8 +34,6 @@ export default function BankPage() {
                 await createBank(data);
                 Swal.fire("Berhasil", "Bank berhasil ditambahkan ✅", "success");
             }
-
-            // ✅ Refresh data biar langsung muncul
             await fetchBanks();
         } catch (err) {
             console.error("Save bank error:", err);
@@ -37,7 +44,6 @@ export default function BankPage() {
         }
     };
 
-    // 🔹 Hapus bank
     const handleDelete = async (id: number) => {
         const result = await Swal.fire({
             title: "Yakin hapus?",
@@ -47,13 +53,12 @@ export default function BankPage() {
             confirmButtonText: "Ya, hapus",
             cancelButtonText: "Batal",
         });
-
         if (!result.isConfirmed) return;
 
         try {
             await deleteBank(id);
             Swal.fire("Berhasil", "Bank berhasil dihapus ✅", "success");
-            await fetchBanks(); // ✅ Refresh setelah hapus
+            await fetchBanks();
         } catch (err) {
             console.error("Delete bank error:", err);
             Swal.fire("Error", "Gagal menghapus bank", "error");
@@ -74,10 +79,7 @@ export default function BankPage() {
 
     return (
         <div className="flex">
-            {/* Sidebar */}
             <Sidebar onLogout={() => console.log("logout")} />
-
-            {/* Main Content */}
             <main className="flex-1 p-6 ml-64">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">Master Data - Banks</h1>
@@ -91,7 +93,6 @@ export default function BankPage() {
                     </Button>
                 </div>
 
-                {/* Table */}
                 <BankTable
                     banks={banks}
                     onEdit={(bank) => {
@@ -101,10 +102,9 @@ export default function BankPage() {
                     onDelete={handleDelete}
                 />
 
-                {/* Form */}
                 <BankForm
                     open={open || !!editingBank}
-                    onOpenChange={setOpen}
+                    onOpenChange={handleDialogOpenChange}
                     onSave={handleSave}
                     editingBank={editingBank}
                 />

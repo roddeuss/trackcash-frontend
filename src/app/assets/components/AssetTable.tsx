@@ -10,8 +10,8 @@ interface Asset {
   type_id: number;
   asset_code: string;
   asset_name: string;
-  quantity: number;
-  type?: { id: number; name: string }; // relasi type
+  lot_size?: number;
+  type?: { id: number; name: string };
 }
 
 interface AssetTableProps {
@@ -20,27 +20,11 @@ interface AssetTableProps {
   onDelete: (id: number) => void;
 }
 
-// 🔹 Helper untuk format quantity sesuai tipe
-const formatQuantity = (asset: Asset) => {
-  const type = asset.type?.name?.toLowerCase();
-
-  // saham → lot, biasanya integer
-  if (type === "saham") {
-    return `${Number(asset.quantity).toLocaleString("id-ID", { maximumFractionDigits: 0 })} lot`;
-  }
-
-  // emas → gram, biasanya 2 desimal
-  if (type === "gold" || type === "emas") {
-    return `${Number(asset.quantity).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} gr`;
-  }
-
-  // crypto → sampai 8 desimal
-  if (type === "crypto" || type === "cryptocurrency") {
-    return `${Number(asset.quantity).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 8 })} ${asset.asset_code}`;
-  }
-
-  // default → 2 desimal
-  return Number(asset.quantity).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const renderLotSize = (asset: Asset) => {
+  const isStock = (asset.type?.name ?? "").toLowerCase() === "saham";
+  if (!isStock) return "—";
+  const ls = Number(asset.lot_size ?? 1);
+  return ls > 1 ? `1 lot = ${ls.toLocaleString("id-ID")} unit` : "1";
 };
 
 export default function AssetTable({ assets, onEdit, onDelete }: AssetTableProps) {
@@ -60,7 +44,7 @@ export default function AssetTable({ assets, onEdit, onDelete }: AssetTableProps
             <th className="text-left p-3">Tipe</th>
             <th className="text-left p-3">Kode</th>
             <th className="text-left p-3">Nama Aset</th>
-            <th className="text-left p-3">Jumlah</th>
+            <th className="text-left p-3">Lot Size</th>
             <th className="text-left p-3">Aksi</th>
           </tr>
         </thead>
@@ -71,18 +55,16 @@ export default function AssetTable({ assets, onEdit, onDelete }: AssetTableProps
               <td className="p-3">{asset.type?.name || "-"}</td>
               <td className="p-3">{asset.asset_code}</td>
               <td className="p-3">{asset.asset_name}</td>
-              <td className="p-3">{formatQuantity(asset)}</td>
-              <td className="p-3 flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => onEdit(asset)}>
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => onDelete(asset.id)}
-                >
-                  <Trash className="w-4 h-4" />
-                </Button>
+              <td className="p-3">{renderLotSize(asset)}</td>
+              <td className="p-3">
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => onEdit(asset)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => onDelete(asset.id)}>
+                    <Trash className="w-4 h-4" />
+                  </Button>
+                </div>
               </td>
             </tr>
           ))}

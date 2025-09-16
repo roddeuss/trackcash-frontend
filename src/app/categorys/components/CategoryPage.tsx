@@ -26,7 +26,16 @@ export default function CategoryPage() {
     { id: number; type: string; name: string } | null
   >(null);
 
-  // 🔹 Save (create / update)
+  // ❗️Tutup modal = reset editing + setOpen(false)
+  const handleDialogOpenChange = (v: boolean) => {
+    if (!v) {
+      setEditingCategory(null);
+      setOpen(false);
+    } else {
+      setOpen(true);
+    }
+  };
+
   const handleSave = async (data: { type: string; name: string }) => {
     try {
       if (editingCategory) {
@@ -36,8 +45,6 @@ export default function CategoryPage() {
         await createCategory(data);
         Swal.fire("Berhasil", "Category berhasil ditambahkan ✅", "success");
       }
-
-      // ✅ langsung refresh setelah create/update
       await fetchCategories();
     } catch (err: any) {
       Swal.fire("Error", err.message || "Gagal menyimpan category", "error");
@@ -47,7 +54,6 @@ export default function CategoryPage() {
     }
   };
 
-  // 🔹 Delete
   const handleDelete = async (id: number) => {
     const result = await Swal.fire({
       title: "Yakin hapus?",
@@ -57,14 +63,11 @@ export default function CategoryPage() {
       confirmButtonText: "Ya, hapus",
       cancelButtonText: "Batal",
     });
-
     if (!result.isConfirmed) return;
 
     try {
       await deleteCategory(id);
       Swal.fire("Berhasil", "Category berhasil dihapus ✅", "success");
-
-      // ✅ langsung refresh setelah hapus
       await fetchCategories();
     } catch (err: any) {
       Swal.fire("Error", err.message || "Gagal menghapus category", "error");
@@ -113,7 +116,7 @@ export default function CategoryPage() {
 
         <CategoryForm
           open={open || !!editingCategory}
-          onOpenChange={setOpen}
+          onOpenChange={handleDialogOpenChange} 
           onSave={handleSave}
           editingCategory={editingCategory}
         />

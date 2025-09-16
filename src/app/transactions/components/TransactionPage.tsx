@@ -34,6 +34,7 @@ export default function TransactionPage() {
 
   useEffect(() => {
     fetchTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSave = async (
@@ -65,7 +66,6 @@ export default function TransactionPage() {
       confirmButtonText: "Ya, hapus",
       cancelButtonText: "Batal",
     });
-
     if (!result.isConfirmed) return;
 
     try {
@@ -77,7 +77,16 @@ export default function TransactionPage() {
     }
   };
 
-  // Filter + search + sort
+  // ❗ Handler open/close modal — reset editing saat close
+  const handleDialogOpenChange = (v: boolean) => {
+    if (!v) {
+      setEditingTransaction(null);
+      setOpen(false);
+    } else {
+      setOpen(true);
+    }
+  };
+
   const filteredTransactions = useMemo(() => {
     let data = transactions;
     if (search) {
@@ -95,7 +104,6 @@ export default function TransactionPage() {
     );
   }, [transactions, search, filterCategory, sortByDate]);
 
-  // Export CSV
   const exportCSV = () => {
     const csv = [
       ["Tanggal", "Kategori", "Bank", "Deskripsi", "Jumlah"],
@@ -118,7 +126,6 @@ export default function TransactionPage() {
     link.click();
   };
 
-  // Export Excel
   const exportExcel = () => {
     const ws = XLSX.utils.json_to_sheet(
       filteredTransactions.map((trx) => ({
@@ -134,7 +141,6 @@ export default function TransactionPage() {
     XLSX.writeFile(wb, "transactions.xlsx");
   };
 
-  // Export PDF
   const exportPDF = () => {
     const doc = new jsPDF();
     (doc as any).autoTable({
@@ -166,7 +172,6 @@ export default function TransactionPage() {
   return (
     <div className="flex">
       <Sidebar onLogout={() => console.log("logout")} />
-
       <main className="flex-1 p-6 ml-64">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Manajemen Transaksi</h1>
@@ -191,9 +196,7 @@ export default function TransactionPage() {
           />
           <select
             value={filterCategory || ""}
-            onChange={(e) =>
-              setFilterCategory(e.target.value || null)
-            }
+            onChange={(e) => setFilterCategory(e.target.value || null)}
             className="border rounded px-3 py-2"
           >
             <option value="">All Categories</option>
@@ -239,7 +242,7 @@ export default function TransactionPage() {
 
         <TransactionForm
           open={open || !!editingTransaction}
-          onOpenChange={setOpen}
+          onOpenChange={handleDialogOpenChange}
           onSave={handleSave}
           editingTransaction={editingTransaction}
         />

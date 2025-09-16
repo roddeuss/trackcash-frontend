@@ -8,7 +8,7 @@ export interface Asset {
   type_id: number;
   asset_code: string;
   asset_name: string;
-  quantity: number;
+  lot_size: number;
   type?: { id: number; name: string }; // relasi optional
 }
 

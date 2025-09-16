@@ -1,6 +1,8 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "next-themes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,15 +21,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning mencegah mismatch saat theme di-hydrate
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100`}
       >
-        {children}
+        {/* ThemeProvider mengatur class 'dark' pada <html> */}
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

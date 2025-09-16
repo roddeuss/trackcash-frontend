@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Sidebar from "@/components/layout/Sidebar";
@@ -17,13 +17,20 @@ interface Type {
 }
 
 export default function AssetPage() {
-  const { assets, loading, fetchAssets, createAsset, updateAsset, deleteAsset } =
-    useAsset();
+  const {
+    assets,
+    loading,
+    fetchAssets,
+    createAsset,
+    updateAsset,
+    deleteAsset,
+  } = useAsset();
+
   const [types, setTypes] = useState<Type[]>([]);
   const [open, setOpen] = useState(false);
-  const [editingAsset, setEditingAsset] = useState<number | null>(null);
+  const [editingAssetId, setEditingAssetId] = useState<number | null>(null);
 
-  // 🔹 Ambil types untuk relasi asset
+  // Ambil data type untuk dropdown
   const fetchTypes = async () => {
     try {
       const res = await fetch(`${API_URL}/types`, {
@@ -43,40 +50,51 @@ export default function AssetPage() {
   useEffect(() => {
     fetchAssets();
     fetchTypes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 🔹 Tambah / Update asset
+  const editingAsset = useMemo(
+    () => assets.find((a) => a.id === editingAssetId) || null,
+    [assets, editingAssetId]
+  );
+
+  const isStockType = (typeId: number | null | undefined) => {
+    const t = types.find((x) => x.id === typeId);
+    return (t?.name ?? "").toLowerCase() === "saham";
+  };
+
+  // Tambah / Update asset (pakai lot_size hanya untuk saham)
   const handleSave = async (data: {
     type_id: number;
     asset_code: string;
     asset_name: string;
-    quantity: number;
+    lot_size: number; // dari form; untuk non-saham akan dipaksa 1
   }) => {
     try {
-      if (editingAsset) {
-        await updateAsset(editingAsset, data);
+      const effectiveLotSize = isStockType(data.type_id) ? Number(data.lot_size || 1) : 1;
+
+      if (editingAssetId) {
+        await updateAsset(editingAssetId, { ...data, lot_size: effectiveLotSize });
         Swal.fire("Berhasil", "Aset berhasil diperbarui ✅", "success");
       } else {
-        await createAsset(data);
+        await createAsset({ ...data, lot_size: effectiveLotSize });
         Swal.fire("Berhasil", "Aset berhasil ditambahkan ✅", "success");
       }
-
-      // ✅ Refresh data biar langsung muncul
       await fetchAssets();
     } catch (err) {
       console.error("Save asset error:", err);
       Swal.fire("Error", "Terjadi kesalahan saat menyimpan data aset", "error");
     } finally {
-      setEditingAsset(null);
+      setEditingAssetId(null);
       setOpen(false);
     }
   };
 
-  // 🔹 Hapus asset
+  // Hapus asset
   const handleDelete = async (id: number) => {
     const result = await Swal.fire({
       title: "Yakin hapus?",
-      text: "Data aset akan dihapus permanen",
+      text: "Data aset akan dihapus (soft delete)",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Ya, hapus",
@@ -88,12 +106,20 @@ export default function AssetPage() {
     try {
       await deleteAsset(id);
       Swal.fire("Berhasil", "Aset berhasil dihapus ✅", "success");
-
-      // ✅ Refresh data setelah hapus
       await fetchAssets();
     } catch (err) {
       console.error("Delete asset error:", err);
       Swal.fire("Error", "Terjadi kesalahan saat menghapus aset", "error");
+    }
+  };
+
+  // Handler open/close modal — reset editing saat close
+  const handleDialogOpenChange = (v: boolean) => {
+    if (!v) {
+      setEditingAssetId(null);
+      setOpen(false);
+    } else {
+      setOpen(true);
     }
   };
 
@@ -117,7 +143,7 @@ export default function AssetPage() {
           <h1 className="text-2xl font-bold">Master Data - Assets</h1>
           <Button
             onClick={() => {
-              setEditingAsset(null);
+              setEditingAssetId(null);
               setOpen(true);
             }}
           >
@@ -128,17 +154,28 @@ export default function AssetPage() {
         <AssetTable
           assets={assets}
           onEdit={(asset) => {
-            setEditingAsset(asset.id);
+            setEditingAssetId(asset.id);
             setOpen(true);
           }}
           onDelete={handleDelete}
         />
 
         <AssetForm
-          open={open || editingAsset !== null}
-          onOpenChange={setOpen}
+          open={open || editingAssetId !== null}
+          onOpenChange={handleDialogOpenChange}
           onSave={handleSave}
-          editingAsset={assets.find((a) => a.id === editingAsset) || null}
+          editingAsset={
+            editingAsset
+              ? {
+                id: editingAsset.id,
+                type_id: editingAsset.type_id,
+                asset_code: editingAsset.asset_code,
+                asset_name: editingAsset.asset_name,
+                // backend bisa kirim lot_size; fallback 1 utk non-saham
+                lot_size: (editingAsset as any).lot_size ?? 1,
+              }
+              : null
+          }
           types={types}
         />
       </main>
