@@ -5,13 +5,13 @@ import {
     Home,
     Database,
     Landmark,
-    Building2,
     Tags,
     DollarSign,
     PieChart,
     User,
     Settings,
     LogOut,
+    Wallet, // 🔹 bisa dipakai untuk budget
 } from "lucide-react";
 
 const menuGroups = [
@@ -24,7 +24,7 @@ const menuGroups = [
         items: [
             { name: "Asset", href: "/assets", icon: Database },
             { name: "Bank", href: "/banks", icon: Landmark },
-            { name: "Category", href: "/categorys", icon: Tags },
+            { name: "Category", href: "/categories", icon: Tags }, // 🔹 typo categorys → categories
             { name: "Type", href: "/types", icon: Tags },
         ],
     },
@@ -33,6 +33,12 @@ const menuGroups = [
         items: [
             { name: "Transaction", href: "/transactions", icon: DollarSign },
             { name: "Investment", href: "/investments", icon: PieChart },
+        ],
+    },
+    {
+        title: "Budgeting",
+        items: [
+            { name: "Budgets", href: "/budgets", icon: Wallet }, // 🔹 menu baru
         ],
     },
     {
@@ -72,13 +78,6 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
                     </div>
                 ))}
             </nav>
-            <button
-                onClick={onLogout}
-                className="flex items-center gap-3 px-4 py-2 m-4 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
-            >
-                <LogOut className="w-5 h-5" />
-                Logout
-            </button>
         </aside>
     );
 }

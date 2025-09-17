@@ -1,16 +1,18 @@
 // src/utils/format.ts
-export function formatDateTime(dateStr: string | Date): string {
+export function formatDateTime(dateStr: string): string {
   if (!dateStr) return "-";
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "-";
+  if (isNaN(d.getTime())) return dateStr; // fallback kalau invalid
 
-  const dd = ("0" + d.getDate()).slice(-2);
-  const mm = ("0" + (d.getMonth() + 1)).slice(-2);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0"); // bulan mulai dari 0
   const yyyy = d.getFullYear();
-  const hh = ("0" + d.getHours()).slice(-2);
-  const min = ("0" + d.getMinutes()).slice(-2);
 
-  return `${dd}-${mm}-${yyyy}`;
+  const HH = String(d.getHours()).padStart(2, "0");
+  const MM = String(d.getMinutes()).padStart(2, "0");
+  const SS = String(d.getSeconds()).padStart(2, "0");
+
+  return `${dd}-${mm}-${yyyy} ${HH}:${MM}:${SS}`;
 }
 
 export function formatCurrency(value: number, locale = "id-ID", currency = "IDR"): string {

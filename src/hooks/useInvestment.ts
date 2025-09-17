@@ -3,6 +3,14 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "@/lib/api";
 
+export interface InvestmentTransaction {
+  id: number;
+  type: "buy" | "sell";
+  units: number;
+  price_per_unit: number;
+  transaction_date: string;
+}
+
 export interface Investment {
   id: number;
   user_id: number;
@@ -11,7 +19,9 @@ export interface Investment {
   average_buy_price: number;
   deleted: boolean;
   asset?: { id: number; asset_code: string; asset_name: string };
+  transactions?: InvestmentTransaction[]; // 👈 tambahan
 }
+
 
 export interface BuyPayload {
   asset_id: number;
