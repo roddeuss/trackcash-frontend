@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { API_URL } from "@/lib/api";
+import { ensureSecondsDMY } from "@/utils/datetime";
 
 export interface Transaction {
   id: number;
@@ -17,19 +18,14 @@ export interface Transaction {
   asset?: { id: number; asset_name: string };
 }
 
-
 export function useTransaction() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 🔹 Helper untuk error message
-  const getErrorMessage = (err: unknown): string => {
-    if (err instanceof Error) return err.message;
-    return String(err);
-  };
+  const getErrorMessage = (err: unknown): string =>
+    err instanceof Error ? err.message : String(err);
 
-  // 🔹 Fetch transactions
   const fetchTransactions = async () => {
     setLoading(true);
     setError(null);
@@ -40,21 +36,15 @@ export function useTransaction() {
           Accept: "application/json",
         },
       });
+      if (!res.ok)
+        throw new Error((await res.text()) || "Failed to fetch transactions");
 
-      if (!res.ok) throw new Error("Failed to fetch transactions");
-
-      const data: unknown = await res.json();
-
-      let transactionsData: Transaction[] = [];
-
-      if (Array.isArray(data)) {
-        transactionsData = data as Transaction[];
-      } else if (typeof data === "object" && data !== null && "data" in data) {
-        transactionsData = (data as { data: Transaction[] }).data;
-      }
-
+      const json = await res.json();
+      const transactionsData: Transaction[] = Array.isArray(json)
+        ? json
+        : json?.data ?? [];
       setTransactions(transactionsData);
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Fetch transactions error:", err);
       setError(getErrorMessage(err));
     } finally {
@@ -62,11 +52,18 @@ export function useTransaction() {
     }
   };
 
-  // 🔹 Create transaction
+  // CREATE
   const createTransaction = async (
     payload: Omit<Transaction, "id" | "user_id" | "bank" | "asset" | "category">
   ) => {
     try {
+      const normalized = {
+        ...payload,
+        transaction_date: ensureSecondsDMY(
+          String(payload.transaction_date || "")
+        ),
+      };
+
       const res = await fetch(`${API_URL}/transactions`, {
         method: "POST",
         headers: {
@@ -74,21 +71,23 @@ export function useTransaction() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
           Accept: "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(normalized),
       });
 
-      if (!res.ok) throw new Error("Failed to create transaction");
+      if (!res.ok)
+        throw new Error((await res.text()) || "Failed to create transaction");
 
-      const newTransaction: Transaction = await res.json();
+      const json = await res.json();
+      const newTransaction: Transaction = json?.data ?? json;
       setTransactions((prev) => [...prev, newTransaction]);
       return newTransaction;
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Create transaction error:", err);
       throw err;
     }
   };
 
-  // 🔹 Update transaction
+  // UPDATE
   const updateTransaction = async (
     id: number,
     payload: Partial<
@@ -96,6 +95,17 @@ export function useTransaction() {
     >
   ) => {
     try {
+      const normalized = {
+        ...payload,
+        ...(payload.transaction_date
+          ? {
+              transaction_date: ensureSecondsDMY(
+                String(payload.transaction_date)
+              ),
+            }
+          : {}),
+      };
+
       const res = await fetch(`${API_URL}/transactions/${id}`, {
         method: "PUT",
         headers: {
@@ -103,23 +113,24 @@ export function useTransaction() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
           Accept: "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(normalized),
       });
 
-      if (!res.ok) throw new Error("Failed to update transaction");
+      if (!res.ok)
+        throw new Error((await res.text()) || "Failed to update transaction");
 
-      const updatedTransaction: Transaction = await res.json();
+      const json = await res.json();
+      const updatedTransaction: Transaction = json?.data ?? json;
       setTransactions((prev) =>
         prev.map((t) => (t.id === id ? updatedTransaction : t))
       );
       return updatedTransaction;
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Update transaction error:", err);
       throw err;
     }
   };
 
-  // 🔹 Delete transaction
   const deleteTransaction = async (id: number) => {
     try {
       const res = await fetch(`${API_URL}/transactions/${id}`, {
@@ -129,17 +140,15 @@ export function useTransaction() {
           Accept: "application/json",
         },
       });
-
-      if (!res.ok) throw new Error("Failed to delete transaction");
-
+      if (!res.ok)
+        throw new Error((await res.text()) || "Failed to delete transaction");
       setTransactions((prev) => prev.filter((t) => t.id !== id));
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Delete transaction error:", err);
       throw err;
     }
   };
 
-  // 🔹 Auto fetch saat hook dipakai
   useEffect(() => {
     fetchTransactions();
   }, []);

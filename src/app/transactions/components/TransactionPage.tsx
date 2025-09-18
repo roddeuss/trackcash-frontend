@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import TransactionTable from "./TransactionTable";
 import TransactionForm from "./TransactionForm";
-import Sidebar from "@/components/layout/Sidebar";
 import Swal from "sweetalert2";
 import { useTransaction, Transaction } from "@/hooks/useTransaction";
+import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -15,6 +16,7 @@ import "jspdf-autotable";
 import { formatDateTime, formatCurrency } from "@/utils/format";
 
 export default function TransactionPage() {
+  const { user, loading: authLoading, logout } = useAuth();
   const {
     transactions,
     loading,
@@ -77,7 +79,7 @@ export default function TransactionPage() {
     }
   };
 
-  // ❗ Handler open/close modal — reset editing saat close
+  // Handler open/close modal — reset editing saat close
   const handleDialogOpenChange = (v: boolean) => {
     if (!v) {
       setEditingTransaction(null);
@@ -156,7 +158,8 @@ export default function TransactionPage() {
     doc.save("transactions.pdf");
   };
 
-  if (loading) {
+  // Loading gabungan auth + data
+  if (authLoading || loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         <motion.div
@@ -169,11 +172,18 @@ export default function TransactionPage() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-screen text-gray-600">
+        Silakan login dulu
+      </div>
+    );
+  }
+
   return (
-    <div className="flex">
-      <Sidebar onLogout={() => console.log("logout")} />
-      <main className="flex-1 p-6 ml-64">
-        <div className="flex justify-between items-center mb-6">
+    <AdminLayout username={user.name} onLogout={logout}>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Manajemen Transaksi</h1>
           <Button
             onClick={() => {
@@ -186,7 +196,7 @@ export default function TransactionPage() {
         </div>
 
         {/* Filter & Search */}
-        <div className="flex flex-wrap gap-4 mb-4 items-center">
+        <div className="flex flex-wrap gap-4 items-center">
           <input
             type="text"
             placeholder="Search..."
@@ -246,7 +256,7 @@ export default function TransactionPage() {
           onSave={handleSave}
           editingTransaction={editingTransaction}
         />
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

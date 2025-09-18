@@ -2,18 +2,28 @@
 "use client";
 
 import { useState } from "react";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import BankTable, { BankRow } from "./BankTable";
 import BankForm from "./BankForm";
-import Sidebar from "@/components/layout/Sidebar";
 import Swal from "sweetalert2";
 import { useBank } from "@/hooks/useBank";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function BankPage() {
-  const { banks = [], loading, createBank, updateBank, deleteBank, fetchBanks, error } =
-    useBank(); // <- fallback banks = []
+  const { user, loading: authLoading, logout } = useAuth();
+  const {
+    banks = [],
+    loading,
+    createBank,
+    updateBank,
+    deleteBank,
+    fetchBanks,
+    error,
+  } = useBank();
+
   const [open, setOpen] = useState(false);
   const [editingBank, setEditingBank] = useState<BankRow | null>(null);
 
@@ -66,7 +76,7 @@ export default function BankPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <motion.div
@@ -78,11 +88,18 @@ export default function BankPage() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-screen text-gray-600">
+        Silakan login dulu
+      </div>
+    );
+  }
+
   return (
-    <div className="flex">
-      <Sidebar onLogout={() => console.log("logout")} />
-      <main className="flex-1 p-6 ml-64">
-        <div className="flex justify-between items-center mb-6">
+    <AdminLayout username={user.name} onLogout={logout}>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Master Data - Banks</h1>
           <Button
             onClick={() => {
@@ -100,7 +117,6 @@ export default function BankPage() {
           </p>
         )}
 
-        {/* banks || [] memastikan aman dari undefined */}
         <BankTable
           banks={banks || []}
           onEdit={(bank) => {
@@ -116,7 +132,7 @@ export default function BankPage() {
           onSave={handleSave}
           editingBank={editingBank as any}
         />
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

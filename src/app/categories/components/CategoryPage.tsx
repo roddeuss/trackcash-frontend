@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import CategoryTable from "./CategoryTable";
 import CategoryForm from "./CategoryForm";
-import Sidebar from "@/components/layout/Sidebar";
 import Swal from "sweetalert2";
 import { useCategories } from "@/hooks/useCategories";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function CategoryPage() {
+  const { user, loading: authLoading, logout } = useAuth();
   const {
     categories,
     loading,
@@ -26,7 +28,6 @@ export default function CategoryPage() {
     { id: number; type: string; name: string } | null
   >(null);
 
-  // ❗️Tutup modal = reset editing + setOpen(false)
   const handleDialogOpenChange = (v: boolean) => {
     if (!v) {
       setEditingCategory(null);
@@ -47,7 +48,7 @@ export default function CategoryPage() {
       }
       await fetchCategories();
     } catch (err: any) {
-      Swal.fire("Error", err.message || "Gagal menyimpan category", "error");
+      Swal.fire("Error", err?.message || "Gagal menyimpan category", "error");
     } finally {
       setEditingCategory(null);
       setOpen(false);
@@ -70,11 +71,11 @@ export default function CategoryPage() {
       Swal.fire("Berhasil", "Category berhasil dihapus ✅", "success");
       await fetchCategories();
     } catch (err: any) {
-      Swal.fire("Error", err.message || "Gagal menghapus category", "error");
+      Swal.fire("Error", err?.message || "Gagal menghapus category", "error");
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <motion.div
@@ -86,14 +87,18 @@ export default function CategoryPage() {
     );
   }
 
-  if (error) return <p className="p-6 text-red-500">{error}</p>;
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-screen text-gray-600">
+        Silakan login dulu
+      </div>
+    );
+  }
 
   return (
-    <div className="flex">
-      <Sidebar onLogout={() => console.log("logout")} />
-
-      <main className="flex-1 p-6 ml-64">
-        <div className="flex justify-between items-center mb-6">
+    <AdminLayout username={user.name} onLogout={logout}>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Master Data - Categories</h1>
           <Button
             onClick={() => {
@@ -104,6 +109,12 @@ export default function CategoryPage() {
             <Plus className="w-4 h-4 mr-2" /> Tambah Category
           </Button>
         </div>
+
+        {error && (
+          <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 rounded">
+            {error}
+          </p>
+        )}
 
         <CategoryTable
           categories={categories}
@@ -116,11 +127,11 @@ export default function CategoryPage() {
 
         <CategoryForm
           open={open || !!editingCategory}
-          onOpenChange={handleDialogOpenChange} 
+          onOpenChange={handleDialogOpenChange}
           onSave={handleSave}
           editingCategory={editingCategory}
         />
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

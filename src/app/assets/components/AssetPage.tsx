@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AdminLayout from "@/components/layout/AdminLayout";  // ✅ pakai AdminLayout
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import Sidebar from "@/components/layout/Sidebar";
 import AssetTable from "./AssetTable";
 import AssetForm from "./AssetForm";
 import Swal from "sweetalert2";
 import { useAsset } from "@/hooks/useAsset";
 import { API_URL } from "@/lib/api";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";  // ✅ supaya bisa ambil user info
 
 interface Type {
   id: number;
@@ -25,6 +26,8 @@ export default function AssetPage() {
     updateAsset,
     deleteAsset,
   } = useAsset();
+
+  const { user, logout } = useAuth(); // ✅ ambil user info & logout
 
   const [types, setTypes] = useState<Type[]>([]);
   const [open, setOpen] = useState(false);
@@ -63,15 +66,17 @@ export default function AssetPage() {
     return (t?.name ?? "").toLowerCase() === "saham";
   };
 
-  // Tambah / Update asset (pakai lot_size hanya untuk saham)
+  // Tambah / Update asset
   const handleSave = async (data: {
     type_id: number;
     asset_code: string;
     asset_name: string;
-    lot_size: number; // dari form; untuk non-saham akan dipaksa 1
+    lot_size: number;
   }) => {
     try {
-      const effectiveLotSize = isStockType(data.type_id) ? Number(data.lot_size || 1) : 1;
+      const effectiveLotSize = isStockType(data.type_id)
+        ? Number(data.lot_size || 1)
+        : 1;
 
       if (editingAssetId) {
         await updateAsset(editingAssetId, { ...data, lot_size: effectiveLotSize });
@@ -113,7 +118,7 @@ export default function AssetPage() {
     }
   };
 
-  // Handler open/close modal — reset editing saat close
+  // Handler modal
   const handleDialogOpenChange = (v: boolean) => {
     if (!v) {
       setEditingAssetId(null);
@@ -135,10 +140,13 @@ export default function AssetPage() {
     );
   }
 
+  if (!user) {
+    return <div className="flex items-center justify-center h-screen text-gray-600">Silakan login dulu</div>;
+  }
+
   return (
-    <div className="flex">
-      <Sidebar onLogout={() => console.log("logout")} />
-      <main className="flex-1 p-6 ml-64">
+    <AdminLayout username={user.name} onLogout={logout}>
+      <div className="p-6 space-y-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Master Data - Assets</h1>
           <Button
@@ -171,14 +179,13 @@ export default function AssetPage() {
                 type_id: editingAsset.type_id,
                 asset_code: editingAsset.asset_code,
                 asset_name: editingAsset.asset_name,
-                // backend bisa kirim lot_size; fallback 1 utk non-saham
                 lot_size: (editingAsset as any).lot_size ?? 1,
               }
               : null
           }
           types={types}
         />
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import Sidebar from "@/components/layout/Sidebar";
 import Swal from "sweetalert2";
 import { motion } from "framer-motion";
 import * as XLSX from "xlsx";
@@ -13,8 +13,10 @@ import { formatCurrency } from "@/utils/format";
 import { useInvestment, Investment } from "@/hooks/useInvestment";
 import InvestmentTable from "./InvestmentTable";
 import InvestmentForm from "./InvestmentForm";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function InvestmentPage() {
+    const { user, loading: authLoading, logout } = useAuth();
     const {
         investments,
         loading,
@@ -84,9 +86,9 @@ export default function InvestmentPage() {
         investment_id?: number;
         bank_id: number;
         category_id: number;
-        units: number;              // sudah dalam unit dasar
-        price_per_unit: number;     // sudah harga per unit dasar
-        transaction_date: string;
+        units: number;
+        price_per_unit: number;
+        transaction_date: string; // harus ISO/parsable backend (YYYY-MM-DD HH:mm:ss)
     }) => {
         try {
             if (form.mode === "buy") {
@@ -112,7 +114,8 @@ export default function InvestmentPage() {
                 const pl = (res as any)?.profit_loss;
                 Swal.fire(
                     "Berhasil",
-                    `Penjualan investasi tercatat ✅${typeof pl === "number" ? `\nP/L: ${formatCurrency(pl)}` : ""}`,
+                    `Penjualan investasi tercatat ✅${typeof pl === "number" ? `\nP/L: ${formatCurrency(pl)}` : ""
+                    }`,
                     "success"
                 );
             }
@@ -142,7 +145,6 @@ export default function InvestmentPage() {
         }
     };
 
-    // Pastikan modal bisa di-close via X/overlay
     const handleDialogOpenChange = (v: boolean) => {
         if (!v) {
             setEditing(null);
@@ -152,7 +154,8 @@ export default function InvestmentPage() {
         }
     };
 
-    if (loading) {
+    // Loading gabungan auth + data
+    if (authLoading || loading) {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
                 <motion.div
@@ -165,11 +168,18 @@ export default function InvestmentPage() {
         );
     }
 
+    if (!user) {
+        return (
+            <div className="flex items-center justify-center h-screen text-gray-600">
+                Silakan login dulu
+            </div>
+        );
+    }
+
     return (
-        <div className="flex">
-            <Sidebar onLogout={() => console.log("logout")} />
-            <main className="flex-1 p-6 ml-64">
-                <div className="flex justify-between items-center mb-6">
+        <AdminLayout username={user.name} onLogout={logout}>
+            <div className="p-6 space-y-6">
+                <div className="flex justify-between items-center">
                     <h1 className="text-2xl font-bold">Manajemen Investasi</h1>
                     <div className="flex gap-2">
                         <Button
@@ -193,7 +203,8 @@ export default function InvestmentPage() {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-4 mb-4 items-center">
+                {/* Filter & Export */}
+                <div className="flex flex-wrap gap-4 items-center">
                     <input
                         type="text"
                         placeholder="Cari aset (kode/nama)..."
@@ -235,7 +246,7 @@ export default function InvestmentPage() {
                     onSubmit={handleSubmit}
                     editing={editing}
                 />
-            </main>
-        </div>
+            </div>
+        </AdminLayout>
     );
 }

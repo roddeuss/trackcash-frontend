@@ -21,10 +21,11 @@ export default function BudgetTable({
   const filtered = useMemo(() => {
     if (!query) return budgets;
     const q = query.toLowerCase();
-    return budgets.filter((b) =>
-      (b.name || "").toLowerCase().includes(q) ||
-      (b.category?.name || "").toLowerCase().includes(q) ||
-      (b.period || "").toLowerCase().includes(q)
+    return budgets.filter(
+      (b) =>
+        (b.name || "").toLowerCase().includes(q) ||
+        (b.category?.name || "").toLowerCase().includes(q) ||
+        (b.period || "").toLowerCase().includes(q)
     );
   }, [budgets, query]);
 
@@ -44,30 +45,17 @@ export default function BudgetTable({
 
       <div className="overflow-x-auto rounded-xl border bg-white">
         <table className="w-full table-fixed border-collapse">
-          {/* Kontrol lebar kolom agar rapi */}
-          <colgroup>
-            <col className="w-[18%]" /> {/* Nama */}
-            <col className="w-[14%]" /> {/* Kategori */}
-            <col className="w-[10%]" /> {/* Period */}
-            <col className="w-[22%]" /> {/* Window */}
-            <col className="w-[10%]" /> {/* Budget */}
-            <col className="w-[10%]" /> {/* Spent */}
-            <col className="w-[10%]" /> {/* Remaining */}
-            <col className="w-[12%]" /> {/* Progress */}
-            <col className="w-[10%]" /> {/* Aksi */}
-          </colgroup>
-
           <thead>
             <tr className="bg-gray-50/80 text-left text-gray-600 text-sm">
-              <th className="p-3 border">Nama</th>
-              <th className="p-3 border">Kategori</th>
-              <th className="p-3 border">Period</th>
-              <th className="p-3 border">Window</th>
-              <th className="p-3 border text-right">Budget</th>
-              <th className="p-3 border text-right">Spent</th>
-              <th className="p-3 border text-right">Remaining</th>
-              <th className="p-3 border">Progress</th>
-              <th className="p-3 border text-center">Aksi</th>
+              <th className="p-3 border w-[18%]">Nama</th>
+              <th className="p-3 border w-[14%]">Kategori</th>
+              <th className="p-3 border w-[10%]">Period</th>
+              <th className="p-3 border w-[22%]">Window</th>
+              <th className="p-3 border w-[10%] text-right">Budget</th>
+              <th className="p-3 border w-[10%] text-right">Spent</th>
+              <th className="p-3 border w-[10%] text-right">Remaining</th>
+              <th className="p-3 border w-[12%]">Progress</th>
+              <th className="p-3 border w-[10%] text-center">Aksi</th>
             </tr>
           </thead>
 
@@ -77,13 +65,13 @@ export default function BudgetTable({
               return (
                 <tr
                   key={b.id}
-                  className={`align-middle ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/40"} hover:bg-gray-50`}
+                  className={`align-middle ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/40"
+                    } hover:bg-gray-50`}
                 >
                   <td className="p-3 border">{b.name || "-"}</td>
                   <td className="p-3 border">{b.category?.name || "-"}</td>
                   <td className="p-3 border capitalize">{b.period}</td>
 
-                  {/* Window ringkas + tooltip full value */}
                   <td className="p-3 border">
                     <div
                       title={windowLabel(b)}

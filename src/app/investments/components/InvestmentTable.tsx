@@ -29,49 +29,52 @@ export default function InvestmentTable({
         </thead>
         <tbody>
           {investments.map((i) => (
-            <>
-              <tr
-                key={i.id}
-                className="hover:bg-gray-50 cursor-pointer"
-                onClick={() => setExpanded(expanded === i.id ? null : i.id)}
-              >
-                <td className="p-3 border">
-                  {i.asset?.asset_code} - {i.asset?.asset_name}
-                </td>
-                <td className="p-3 border">
-                  {/* format lot kalau saham */}
-                  {i.units % 1 === 0 ? `${i.units / 100} lot` : i.units}
-                </td>
-                <td className="p-3 border">
-                  {formatCurrency(i.average_buy_price)}
-                </td>
-                <td className="p-3 border">
-                  {formatCurrency(i.units * i.average_buy_price)}
-                </td>
-                <td className="p-3 border">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSell(i);
-                    }}
-                    className="text-blue-600 hover:underline mr-3"
-                  >
-                    Jual
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(i.id);
-                    }}
-                    className="text-red-600 hover:underline"
-                  >
-                    Hapus
-                  </button>
-                </td>
-              </tr>
+            <tr
+              key={i.id}
+              className="hover:bg-gray-50 cursor-pointer"
+              onClick={() => setExpanded(expanded === i.id ? null : i.id)}
+            >
+              <td className="p-3 border">
+                {i.asset?.asset_code} - {i.asset?.asset_name}
+              </td>
+              <td className="p-3 border">
+                {i.units % 1 === 0 ? `${i.units / 100} lot` : i.units}
+              </td>
+              <td className="p-3 border">
+                {formatCurrency(i.average_buy_price)}
+              </td>
+              <td className="p-3 border">
+                {formatCurrency(i.units * i.average_buy_price)}
+              </td>
+              <td className="p-3 border">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSell(i);
+                  }}
+                  className="text-blue-600 hover:underline mr-3"
+                >
+                  Jual
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(i.id);
+                  }}
+                  className="text-red-600 hover:underline"
+                >
+                  Hapus
+                </button>
+              </td>
+            </tr>
+          ))}
 
-              {expanded === i.id && i.transactions && (
-                <tr>
+          {/* Row transaksi detail */}
+          {investments.map(
+            (i) =>
+              expanded === i.id &&
+              i.transactions && (
+                <tr key={`trx-${i.id}`}>
                   <td colSpan={5} className="p-3 border bg-gray-50">
                     <table className="w-full text-sm">
                       <thead>
@@ -86,7 +89,9 @@ export default function InvestmentTable({
                       <tbody>
                         {i.transactions.map((t) => (
                           <tr key={t.id}>
-                              <td className="p-2 border ">{formatDateTime(t.transaction_date)}</td>
+                            <td className="p-2 border">
+                              {formatDateTime(t.transaction_date)}
+                            </td>
                             <td className="p-2 border capitalize">{t.type}</td>
                             <td className="p-2 border">{t.units}</td>
                             <td className="p-2 border">
@@ -101,9 +106,8 @@ export default function InvestmentTable({
                     </table>
                   </td>
                 </tr>
-              )}
-            </>
-          ))}
+              )
+          )}
 
           {investments.length === 0 && (
             <tr>
