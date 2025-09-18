@@ -1,7 +1,7 @@
+// components/layout/AdminLayout.tsx
 "use client";
-
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
+import Sidebar from "@/components/layout/Sidebar";
+import Navbar from "@/components/layout/Navbar";
 
 export default function AdminLayout({
     children,
@@ -13,14 +13,11 @@ export default function AdminLayout({
     onLogout: () => void;
 }) {
     return (
-        <div className="flex">
-            {/* Sidebar */}
-            <Sidebar onLogout={onLogout} />
-
-            {/* Main Content */}
-            <div className="flex-1 ml-64 bg-gray-50 min-h-screen">
-                <Navbar username={username} />
-                <main className="p-6">{children}</main>
+        <div className="min-h-screen bg-gray-50">
+            <Sidebar onLogout={onLogout} /> {/* fixed left width 16rem */}
+            <div className="ml-64 flex flex-col min-h-screen"> {/* compensate sidebar */}
+                <Navbar username={username} onLogout={onLogout} />
+                <main className="flex-1">{children}</main>
             </div>
         </div>
     );

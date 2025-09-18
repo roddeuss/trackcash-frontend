@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import Sidebar from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Swal from "sweetalert2";
@@ -63,6 +62,7 @@ export default function BudgetPage() {
     try {
       await deleteBudget(id);
       Swal.fire("Success", "Budget dihapus ✅", "success");
+      fetchBudgets();
     } catch (e: any) {
       Swal.fire("Error", typeof e?.message === "string" ? e.message : "Gagal menghapus budget", "error");
     }
@@ -82,35 +82,33 @@ export default function BudgetPage() {
 
   return (
     <AdminLayout username={user.name} onLogout={logout}>
-      <div className="flex">
-        <Sidebar onLogout={logout} />
-        <main className="flex-1 p-6 ml-64">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">Budgets</h1>
-            <Button onClick={() => setOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Tambah Budget
-            </Button>
-          </div>
+      {/* Biarkan AdminLayout yang memasang ml-64 & min-h-screen */}
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Budgets</h1>
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Tambah Budget
+          </Button>
+        </div>
 
-          {error && <p className="text-red-600 text-sm bg-red-50 p-3 rounded">{error}</p>}
+        {error && <p className="text-red-600 text-sm bg-red-50 p-3 rounded">{error}</p>}
 
-          <BudgetTable
-            budgets={budgets}
-            onEdit={(b) => {
-              setEditing(b);
-              setOpen(true);
-            }}
-            onDelete={handleDelete}
-          />
+        <BudgetTable
+          budgets={budgets}
+          onEdit={(b) => {
+            setEditing(b);
+            setOpen(true);
+          }}
+          onDelete={handleDelete}
+        />
 
-          <BudgetForm
-            open={open || !!editing}
-            onOpenChange={handleOpenChange}
-            onSave={handleSave}
-            categories={categories}
-            editing={editing}
-          />
-        </main>
+        <BudgetForm
+          open={open || !!editing}
+          onOpenChange={handleOpenChange}
+          onSave={handleSave}
+          categories={categories}
+          editing={editing}
+        />
       </div>
     </AdminLayout>
   );
