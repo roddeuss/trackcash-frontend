@@ -2,82 +2,168 @@
 
 import Link from "next/link";
 import {
-    Home,
-    Database,
-    Landmark,
-    Tags,
-    DollarSign,
-    PieChart,
-    User,
-    Settings,
-    LogOut,
-    Wallet, // 🔹 bisa dipakai untuk budget
+  Home,
+  Database,
+  Landmark,
+  Tags,
+  DollarSign,
+  PieChart,
+  User,
+  Settings,
+  LogOut,
+  Wallet,
+  Smartphone,
+  WifiOff,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const menuGroups = [
-    {
-        title: "Home",
-        items: [{ name: "Dashboard", href: "/dashboard", icon: Home }],
-    },
-    {
-        title: "Master Data",
-        items: [
-            { name: "Asset", href: "/assets", icon: Database },
-            { name: "Bank", href: "/banks", icon: Landmark },
-            { name: "Category", href: "/categories", icon: Tags }, // 🔹 typo categorys → categories
-            { name: "Type", href: "/types", icon: Tags },
-        ],
-    },
-    {
-        title: "Transactions",
-        items: [
-            { name: "Transaction", href: "/transactions", icon: DollarSign },
-            { name: "Investment", href: "/investments", icon: PieChart },
-        ],
-    },
-    {
-        title: "Budgeting",
-        items: [
-            { name: "Budgets", href: "/budgets", icon: Wallet }, // 🔹 menu baru
-        ],
-    },
-    {
-        title: "Profile",
-        items: [{ name: "Profile", href: "/profile", icon: User }],
-    },
-    {
-        title: "Settings",
-        items: [{ name: "Settings", href: "/settings", icon: Settings }],
-    },
+  {
+    title: "Home",
+    items: [{ name: "Dashboard", href: "/dashboard", icon: Home }],
+  },
+  {
+    title: "Master Data",
+    items: [
+      { name: "Asset", href: "/assets", icon: Database },
+      { name: "Bank", href: "/banks", icon: Landmark },
+      { name: "Category", href: "/categories", icon: Tags },
+      { name: "Type", href: "/types", icon: Tags },
+    ],
+  },
+  {
+    title: "Transactions",
+    items: [
+      { name: "Transaction", href: "/transactions", icon: DollarSign },
+      { name: "Investment", href: "/investments", icon: PieChart },
+    ],
+  },
+  {
+    title: "Budgeting",
+    items: [{ name: "Budgets", href: "/budgets", icon: Wallet }],
+  },
+  {
+    title: "Profile",
+    items: [{ name: "Profile", href: "/profile", icon: User }],
+  },
+  {
+    title: "Settings",
+    items: [{ name: "Settings", href: "/settings", icon: Settings }],
+  },
 ];
 
 export default function Sidebar({ onLogout }: { onLogout: () => void }) {
-    return (
-        <aside className="w-64 bg-white shadow-md h-screen fixed left-0 top-0 flex flex-col">
-            <div className="px-6 py-4 text-2xl font-bold text-indigo-600">
-                TrackCash 💰
+  // --- PWA Install handling ---
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    setCanInstall(false);
+  };
+
+  // --- Offline indicator ---
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
+  return (
+    <aside
+      className={`
+        w-64 fixed left-0 top-0
+        bg-white dark:bg-neutral-900
+        border-r border-neutral-200 dark:border-neutral-800
+        shadow-sm
+        flex flex-col
+        /* safe-area support */
+        pt-[env(safe-area-inset-top)]
+        pb-[env(safe-area-inset-bottom)]
+        /* full mobile viewport height */
+        h-[100dvh]
+      `}
+    >
+      {/* Brand */}
+      <div className="px-6 py-4 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+        TrackCash 💰
+      </div>
+
+      {/* Menu */}
+      <nav className="flex-1 px-4 overflow-y-auto">
+        {menuGroups.map((group) => (
+          <div key={group.title} className="mb-4">
+            <p className="px-2 text-[11px] tracking-wide font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">
+              {group.title}
+            </p>
+            <div className="flex flex-col space-y-1">
+              {group.items.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="flex items-center gap-3 px-4 py-2 rounded-lg
+                             text-gray-700 dark:text-gray-200
+                             hover:bg-indigo-100 hover:text-indigo-700
+                             dark:hover:bg-neutral-800 dark:hover:text-white
+                             transition"
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.name}
+                </Link>
+              ))}
             </div>
-            <nav className="flex-1 px-4 overflow-y-auto">
-                {menuGroups.map((group) => (
-                    <div key={group.title} className="mb-4">
-                        <p className="px-2 text-xs font-semibold text-gray-500 uppercase mb-2">
-                            {group.title}
-                        </p>
-                        <div className="flex flex-col space-y-1">
-                            {group.items.map((item) => (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 transition"
-                                >
-                                    <item.icon className="w-5 h-5" />
-                                    {item.name}
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </nav>
-        </aside>
-    );
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer (Install + Offline + Logout) */}
+      <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 space-y-2">
+        {/* Offline pill */}
+        {!online && (
+          <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 px-3 py-2 rounded-md">
+            <WifiOff className="w-4 h-4" />
+            <span>Kamu sedang offline</span>
+          </div>
+        )}
+
+        {/* Install app (PWA) */}
+        {canInstall && (
+          <Button onClick={handleInstall} variant="secondary" className="w-full justify-center">
+            <Smartphone className="w-4 h-4 mr-2" />
+            Install App
+          </Button>
+        )}
+
+        {/* Logout */}
+        <Button
+          onClick={onLogout}
+          variant="destructive"
+          className="w-full justify-center"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Logout
+        </Button>
+      </div>
+    </aside>
+  );
 }

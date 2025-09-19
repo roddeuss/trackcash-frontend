@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { LogOut, Moon, Sun, User, Download } from "lucide-react";
+import { LogOut, Moon, Sun, User, Download, Smartphone } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +25,7 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 
 type Props = {
   username: string;
-  profilePictureUrl?: string | null; // URL dari backend (profile_picture_url)
+  profilePictureUrl?: string | null;
   onLogout: () => void;
 };
 
@@ -35,7 +35,7 @@ export default function Navbar({ username, profilePictureUrl, onLogout }: Props)
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // initial avatar
+  // initials avatar
   const initials = useMemo(() => {
     const parts = (username ?? "").trim().split(/\s+/);
     const head = (s: string) => (s ? s[0] : "");
@@ -45,17 +45,13 @@ export default function Navbar({ username, profilePictureUrl, onLogout }: Props)
   const isDark = (mounted ? (resolvedTheme ?? theme) : "light") === "dark";
   const toggleTheme = () => setTheme(isDark ? "light" : "dark");
 
-  // preview modal
+  // modal preview foto profil
   const [openPreview, setOpenPreview] = useState(false);
   const hasPicture = !!profilePictureUrl;
-
-  // klik avatar: kalau ada foto ➜ buka preview; kalau tidak ➜ ke /profile
   const handleAvatarClick = () => {
     if (hasPicture) setOpenPreview(true);
     else window.location.href = "/profile";
   };
-
-  // helper unduh file
   const handleDownload = () => {
     if (!profilePictureUrl) return;
     const a = document.createElement("a");
@@ -67,15 +63,62 @@ export default function Navbar({ username, profilePictureUrl, onLogout }: Props)
     a.remove();
   };
 
+  // ===== PWA install =====
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    setCanInstall(false);
+  };
+
+  // ===== Offline banner =====
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
   return (
     <>
-      <header className="sticky top-0 z-40 h-16 bg-white/80 dark:bg-neutral-900/70 backdrop-blur shadow-sm flex items-center justify-between px-6">
+      {/* Banner offline */}
+      {!online && (
+        <div className="w-full bg-amber-100 text-amber-800 text-xs py-1 text-center">
+          Kamu sedang offline
+        </div>
+      )}
+
+      <header
+        className="sticky top-0 z-40 h-16 
+          pt-[env(safe-area-inset-top)]
+          bg-white/80 dark:bg-neutral-900/70 
+          backdrop-blur shadow-sm flex items-center justify-between px-6"
+      >
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
           Welcome, {username} 🎉
         </h1>
 
         <div className="flex items-center gap-4">
-          {/* Power Switch */}
+          {/* Theme Switch */}
           <button
             aria-label="Toggle theme"
             onClick={toggleTheme}
@@ -124,7 +167,6 @@ export default function Navbar({ username, profilePictureUrl, onLogout }: Props)
                 type="button"
               >
                 <Avatar className="h-8 w-8">
-                  {/* pakai URL backend langsung */}
                   {mounted && hasPicture ? (
                     <AvatarImage src={profilePictureUrl!} alt={username} />
                   ) : (
@@ -150,6 +192,18 @@ export default function Navbar({ username, profilePictureUrl, onLogout }: Props)
                   Profile
                 </Link>
               </DropdownMenuItem>
+
+              {/* PWA: Install option */}
+              {canInstall && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleInstall}>
+                    <Smartphone className="mr-2 h-4 w-4" />
+                    <span>Install App</span>
+                  </DropdownMenuItem>
+                </>
+              )}
+
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={onLogout}
