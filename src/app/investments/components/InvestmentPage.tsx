@@ -14,6 +14,8 @@ import { useInvestment, Investment } from "@/hooks/useInvestment";
 import InvestmentTable from "./InvestmentTable";
 import InvestmentForm from "./InvestmentForm";
 import { useAuth } from "@/hooks/useAuth";
+import UnauthorizedPage from "@/app/unauthorized/page";
+
 
 export default function InvestmentPage() {
     const { user, loading: authLoading, logout } = useAuth();
@@ -169,12 +171,9 @@ export default function InvestmentPage() {
     }
 
     if (!user) {
-        return (
-            <div className="flex items-center justify-center h-screen text-gray-600">
-                Silakan login dulu
-            </div>
-        );
+        return <UnauthorizedPage />;
     }
+
 
     return (
         <AdminLayout username={user.name} onLogout={logout}>

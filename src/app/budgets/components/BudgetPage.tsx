@@ -12,6 +12,8 @@ import { useCategories } from "@/hooks/useCategories";
 
 import BudgetTable from "./BudgetTable";
 import BudgetForm from "./BudgetForm";
+import UnauthorizedPage from "@/app/unauthorized/page";
+
 
 export default function BudgetPage() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -77,8 +79,9 @@ export default function BudgetPage() {
   }
 
   if (!user) {
-    return <div className="flex items-center justify-center h-screen text-gray-600">Silakan login dulu</div>;
+    return <UnauthorizedPage />;
   }
+
 
   return (
     <AdminLayout username={user.name} onLogout={logout}>

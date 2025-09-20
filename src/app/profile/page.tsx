@@ -8,6 +8,8 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import Swal from "sweetalert2";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import UnauthorizedPage from "@/app/unauthorized/page";
+
 
 export default function ProfilePage() {
     const { user, loading: authLoading, logout } = useAuth();
@@ -52,8 +54,9 @@ export default function ProfilePage() {
     }
 
     if (!user) {
-        return <div className="flex items-center justify-center h-screen text-gray-600">Silakan login dulu</div>;
+        return <UnauthorizedPage />;
     }
+
 
     const handleUpdateProfile = async () => {
         try {

@@ -10,6 +10,8 @@ import Swal from "sweetalert2";
 import { useCategories } from "@/hooks/useCategories";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import UnauthorizedPage from "@/app/unauthorized/page";
+
 
 export default function CategoryPage() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -88,12 +90,9 @@ export default function CategoryPage() {
   }
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-600">
-        Silakan login dulu
-      </div>
-    );
+    return <UnauthorizedPage />;
   }
+
 
   return (
     <AdminLayout username={user.name} onLogout={logout}>

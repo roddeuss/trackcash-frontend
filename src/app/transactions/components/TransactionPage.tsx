@@ -14,6 +14,8 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { formatDateTime, formatCurrency } from "@/utils/format";
+import UnauthorizedPage from "@/app/unauthorized/page";
+
 
 export default function TransactionPage() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -173,12 +175,9 @@ export default function TransactionPage() {
   }
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-600">
-        Silakan login dulu
-      </div>
-    );
+    return <UnauthorizedPage />;
   }
+
 
   return (
     <AdminLayout username={user.name} onLogout={logout}>

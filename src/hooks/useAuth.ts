@@ -1,70 +1,101 @@
+// hooks/useAuth.ts
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { API_URL } from "@/lib/api";
 
-// 🔹 Definisikan tipe user sesuai API kamu
 interface User {
   id: number;
   name: string;
   email: string;
-  // tambahkan field lain sesuai response API /user
+  // ...tambahkan field lain sesuai /user
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  const [user, setUser] = useState<User | null>(null);
+  const [initializing, setInitializing] = useState(true); // ⬅️ penting untuk cegah flicker
+  const [loading, setLoading] = useState(false);
+
+  const safeGetToken = () =>
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  const parseUser = async (res: Response): Promise<User | null> => {
+    try {
+      const json = await res.json();
+      // backend kamu sering return { data: {...} }
+      if (json && typeof json === "object") {
+        if ("data" in json) return json.data as User;
+        return json as User;
+      }
+    } catch (_) {}
+    return null;
+  };
+
+  const fetchUser = useCallback(async () => {
+    const token = safeGetToken();
     if (!token) {
-      setLoading(false);
+      setUser(null);
+      setInitializing(false);
       return;
     }
 
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(`${API_URL}/user`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch user");
-        }
-
-        const data: User = await res.json();
-        setUser(data);
-      } catch (error: unknown) {
-        console.error("Auth error:", error);
-        localStorage.removeItem("token"); // kalau token invalid, hapus
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  const logout = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     try {
-      await fetch(`${API_URL}/logout`, {
-        method: "POST",
+      setLoading(true);
+      const res = await fetch(`${API_URL}/user`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          Accept: "application/json",
         },
+        cache: "no-store",
       });
-    } catch (error: unknown) {
-      console.error("Logout error:", error);
+
+      if (!res.ok) throw new Error("Unauthorized");
+
+      const u = await parseUser(res);
+      if (!u) throw new Error("Invalid user payload");
+      setUser(u);
+    } catch {
+      // token invalid/expired
+      localStorage.removeItem("token");
+      setUser(null);
+    } finally {
+      setLoading(false);
+      setInitializing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  const logout = useCallback(async () => {
+    const token = safeGetToken();
+    try {
+      if (token) {
+        await fetch(`${API_URL}/logout`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        }).catch(() => {});
+      }
     } finally {
       localStorage.removeItem("token");
       setUser(null);
+      // langsung redirect supaya tidak sempat render Unauthorized
+      router.replace("/login");
     }
-  };
+  }, [router]);
 
-  return { user, loading, logout };
+  const isAuthenticated = !!user;
+
+  return {
+    user,
+    loading,        // loading request /user
+    initializing,   // inisialisasi awal (cek token) — gunakan ini untuk cegah flicker
+    isAuthenticated,
+    fetchUser,      // opsional: panggil ulang setelah update profil
+    logout,
+  };
 }

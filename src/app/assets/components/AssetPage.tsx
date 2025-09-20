@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -11,6 +12,8 @@ import { useAsset } from "@/hooks/useAsset";
 import { API_URL } from "@/lib/api";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";  // ✅ supaya bisa ambil user info
+import UnauthorizedPage from "@/app/unauthorized/page";
+
 
 interface Type {
   id: number;
@@ -141,8 +144,9 @@ export default function AssetPage() {
   }
 
   if (!user) {
-    return <div className="flex items-center justify-center h-screen text-gray-600">Silakan login dulu</div>;
+    return <UnauthorizedPage />;
   }
+
 
   return (
     <AdminLayout username={user.name} onLogout={logout}>

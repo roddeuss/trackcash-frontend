@@ -11,6 +11,8 @@ import Swal from "sweetalert2";
 import { useBank } from "@/hooks/useBank";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import UnauthorizedPage from "@/app/unauthorized/page";
+
 
 export default function BankPage() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -89,12 +91,9 @@ export default function BankPage() {
   }
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-600">
-        Silakan login dulu
-      </div>
-    );
+    return <UnauthorizedPage />;
   }
+
 
   return (
     <AdminLayout username={user.name} onLogout={logout}>

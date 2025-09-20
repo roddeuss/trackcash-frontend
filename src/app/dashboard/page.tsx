@@ -11,6 +11,8 @@ import {
 } from "recharts";
 import { formatCurrency } from "@/utils/format";
 import { Button } from "@/components/ui/button";
+import UnauthorizedPage from "@/app/unauthorized/page";
+
 
 const COLORS = ["#4F46E5", "#10B981", "#EF4444", "#F59E0B", "#6366F1"];
 const RANGE_OPTIONS = [
@@ -92,12 +94,9 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-600">
-        Silakan login dulu
-      </div>
-    );
+    return <UnauthorizedPage />;
   }
+
 
   return (
     <AdminLayout username={user.name} onLogout={logout}>
