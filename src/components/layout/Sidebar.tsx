@@ -14,6 +14,7 @@ import {
   Wallet,
   Smartphone,
   WifiOff,
+  Repeat,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -49,12 +50,20 @@ const menuGroups = [
     items: [
       { name: "Transaction", href: "/transactions", icon: DollarSign },
       { name: "Investment", href: "/investments", icon: PieChart },
+      { name: "Recurring", href: "/recurring-transactions", icon: Repeat },
     ],
   },
   {
     title: "Budgeting",
     items: [{ name: "Budgets", href: "/budgets", icon: Wallet }],
   },
+
+  // 🔹 Tambahkan ini
+  {
+    title: "Reports",
+    items: [{ name: "Laporan", href: "/reports", icon: PieChart }],
+  },
+
   {
     title: "Profile",
     items: [{ name: "Profile", href: "/profile", icon: User }],
@@ -64,6 +73,7 @@ const menuGroups = [
     items: [{ name: "Settings", href: "/settings", icon: Settings }],
   },
 ];
+
 
 export default function Sidebar({ onLogout }: { onLogout: () => void }) {
   const router = useRouter();
