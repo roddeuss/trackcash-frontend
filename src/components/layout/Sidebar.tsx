@@ -57,13 +57,10 @@ const menuGroups = [
     title: "Budgeting",
     items: [{ name: "Budgets", href: "/budgets", icon: Wallet }],
   },
-
-  // 🔹 Tambahkan ini
   {
     title: "Reports",
     items: [{ name: "Laporan", href: "/reports", icon: PieChart }],
   },
-
   {
     title: "Profile",
     items: [{ name: "Profile", href: "/profile", icon: User }],
@@ -73,7 +70,6 @@ const menuGroups = [
     items: [{ name: "Settings", href: "/settings", icon: Settings }],
   },
 ];
-
 
 export default function Sidebar({ onLogout }: { onLogout: () => void }) {
   const router = useRouter();
@@ -120,7 +116,6 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
     try {
       await onLogout();
     } finally {
-      // pastikan pindah ke halaman login walau onLogout async
       router.replace("/login");
     }
   };
@@ -129,15 +124,14 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
     <>
       <aside
         className={`
-          w-64 fixed left-0 top-0
+          hidden md:flex md:flex-col   /* ⬅️ hide di mobile, flex di md+ */
+          w-64
+          fixed left-0 top-0
           bg-white dark:bg-neutral-900
           border-r border-neutral-200 dark:border-neutral-800
           shadow-sm
-          flex flex-col
-          /* safe-area support */
           pt-[env(safe-area-inset-top)]
           pb-[env(safe-area-inset-bottom)]
-          /* full mobile viewport height */
           h-[100dvh]
         `}
       >
@@ -175,7 +169,6 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
 
         {/* Footer (Install + Offline + Logout) */}
         <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 space-y-2">
-          {/* Offline pill */}
           {!online && (
             <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 px-3 py-2 rounded-md">
               <WifiOff className="w-4 h-4" />
@@ -183,7 +176,6 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
 
-          {/* Install app (PWA) */}
           {canInstall && (
             <Button onClick={handleInstall} variant="secondary" className="w-full justify-center">
               <Smartphone className="w-4 h-4 mr-2" />
@@ -191,7 +183,6 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
             </Button>
           )}
 
-          {/* Logout (confirm first) */}
           <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
             <AlertDialogTrigger asChild>
               <Button
